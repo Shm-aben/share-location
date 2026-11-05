@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>شارك موقعك</title>
+
+</head>
+
+<body>
+
+  <h2>مشاركة الموقع بموافقتك</h2>
+
+  <p>إذا وافقت، سيطلب المتصفح إذنك لمشاركة موقعك الحالي.</p>
+
+  <button onclick="shareLocation()">أوافق على مشاركة موقعي</button>
+
+  <p id="result"></p>
+
+  <script>
+
+    function shareLocation() {
+
+      const result = document.getElementById("result");
+
+      if (!navigator.geolocation) {
+
+        result.textContent = "متصفحك لا يدعم تحديد الموقع.";
+
+        return;
+
+      }
+
+      result.textContent = "بانتظار موافقتك على طلب الموقع...";
+
+      navigator.geolocation.getCurrentPosition(
+
+        (position) => {
+
+          const lat = position.coords.latitude;
+
+          const lon = position.coords.longitude;
+
+          result.innerHTML =
+
+            "تمت مشاركة موقعك بموافقتك.<br>" +
+
+            "خط العرض: " + lat + "<br>" +
+
+            "خط الطول: " + lon +
+
+            '<br><a target="_blank" rel="noopener" href="https://www.google.com/maps?q=' +
+
+            lat + ',' + lon + '">عرض الموقع على الخريطة</a>';
+
+        },
+
+        () => {
+
+          result.textContent = "لم تتم مشاركة الموقع. يمكنك رفض الطلب.";
+
+        }
+
+      );
+
+    }
+
+  </script>
+
+</body>
+
+</html>
