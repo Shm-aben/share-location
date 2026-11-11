@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 
 <html lang="ar" dir="rtl">
@@ -6,69 +8,192 @@
 
   <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>شارك موقعك</title>
+ 
+  <title>مختبر اختبار الكاميرا</title>
+
+  <style>
+
+    body {
+
+      font-family: sans-serif;
+
+      text-align: center;
+
+      padding: 25px;
+
+      background: #f3f5f8;
+
+    }
+
+    button {
+
+      padding: 13px 20px;
+
+      margin: 8px;
+
+      border: 0;
+
+      border-radius: 9px;
+
+      background: #1769aa;
+
+      color: white;
+
+      font-size: 16px;
+
+    }
+
+    video, canvas {
+
+      width: 100%;
+
+      max-width: 350px;
+
+      border-radius: 12px;
+
+      margin-top: 15px;
+
+    }
+
+    #status {
+
+      white-space: pre-line;
+
+      line-height: 2;
+
+    }
+
+  </style>
 
 </head>
 
 <body>
 
-  <h2>مشاركة الموقع بموافقتك</h2>
+  <h2>مختبر اختبار الكاميرا</h2>
 
-  <p>إذا وافقت، سيطلب المتصفح إذنك لمشاركة موقعك الحالي.</p>
+  <p>هذه تجربة تعليمية لا تستخدم الكاميرا إلا بعد موافقتك.</p>
 
-  <button onclick="shareLocation()">أوافق على مشاركة موقعي</button>
+  <h3>1. معلومات الزيارة</h3>
 
-  <p id="result"></p>
+  <p id="visit"></p>
+
+  <p id="support"></p>
+
+  <h3>2. اختبار الكاميرا</h3>
+
+  <button id="start">طلب إذن الكاميرا</button>
+
+  <p id="status">لم يتم طلب الإذن بعد.</p>
+
+  <video id="video" autoplay playsinline hidden></video>
+
+  <br>
+
+  <button id="capture" hidden>التقاط صورة</button>
+
+  <canvas id="canvas" hidden></canvas>
+
+  <br>
+
+  <a id="save" hidden download="my-test-photo.png">
+
+    حفظ الصورة على الهاتف
+
+  </a>
 
   <script>
 
-    function shareLocation() {
+    const status = document.getElementById('status');
 
-      const result = document.getElementById("result");
+    const video = document.getElementById('video');
 
-      if (!navigator.geolocation) {
+    const capture = document.getElementById('capture');
 
-        result.textContent = "متصفحك لا يدعم تحديد الموقع.";
+    const canvas = document.getElementById('canvas');
+
+    const save = document.getElementById('save');
+
+    document.getElementById('visit').textContent =
+
+      'وقت فتح الصفحة: ' + new Date().toLocaleString('ar');
+
+    const supported =
+
+      !!(navigator.mediaDevices &&
+
+         navigator.mediaDevices.getUserMedia);
+
+    document.getElementById('support').textContent =
+
+      'دعم الكاميرا: ' + (supported ? 'متاح' : 'غير متاح');
+
+    document.getElementById('start').onclick = async () => {
+
+      if (!supported) {
+
+        status.textContent = 'الكاميرا غير مدعومة أو الصفحة ليست على اتصال آمن HTTPS.';
 
         return;
 
       }
 
-      result.textContent = "بانتظار موافقتك على طلب الموقع...";
+      try {
 
-      navigator.geolocation.getCurrentPosition(
+        const stream = await navigator.mediaDevices.getUserMedia({
 
-        (position) => {
+          video: { facingMode: 'user' },
 
-          const lat = position.coords.latitude;
+          audio: false
 
-          const lon = position.coords.longitude;
+        });
 
-          result.innerHTML =
+        video.srcObject = stream;
 
-            "تمت مشاركة موقعك بموافقتك.<br>" +
+        video.hidden = false;
 
-            "خط العرض: " + lat + "<br>" +
+        capture.hidden = false;
 
-            "خط الطول: " + lon +
+        status.textContent =
 
-            '<br><a target="_blank" rel="noopener" href="https://www.google.com/maps?q=' +
+          'تم منح إذن الكاميرا: ' + new Date().toLocaleString('ar');
 
-            lat + ',' + lon + '">عرض الموقع على الخريطة</a>';
+      } catch (error) {
 
-        },
+        status.textContent =
 
-        () => {
+          'لم يتم منح الإذن أو تعذر تشغيل الكاميرا: ' + error.name;
 
-          result.textContent = "لم تتم مشاركة الموقع. يمكنك رفض الطلب.";
+      }
 
-        }
+    };
+
+    capture.onclick = () => {
+
+      canvas.width = video.videoWidth;
+
+      canvas.height = video.videoHeight;
+
+      canvas.getContext('2d').drawImage(
+
+        video, 0, 0, canvas.width, canvas.height
 
       );
 
-    }
+      canvas.toBlob(blob => {
+
+        if (!blob) return;
+
+        save.href = URL.createObjectURL(blob);
+
+        save.hidden = false;
+
+        status.textContent = 'التُقطت الصورة. اضغط حفظ الصورة لتنزيلها.';
+
+      }, 'image/png');
+
+    };
 
   </script>
 
