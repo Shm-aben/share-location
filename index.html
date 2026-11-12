@@ -10,8 +10,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
- 
-  <title>مختبر اختبار الكاميرا</title>
+  <title>Share Location</title>
 
   <style>
 
@@ -25,45 +24,29 @@
 
       background: #f3f5f8;
 
-    }
-
-    button {
-
-      padding: 13px 20px;
-
-      margin: 8px;
-
-      border: 0;
-
-      border-radius: 9px;
-
-      background: #1769aa;
-
-      color: white;
-
-      font-size: 16px;
+      color: #222;
 
     }
 
-    video, canvas {
+    .container {
 
-      width: 100%;
+      max-width: 450px;
 
-      max-width: 350px;
+      margin: 50px auto;
 
-      border-radius: 12px;
+      padding: 25px;
 
-      margin-top: 15px;
+      background: white;
 
-    }
+      border-radius: 15px;
 
-    #status {
-
-      white-space: pre-line;
-
-      line-height: 2;
+      box-shadow: 0 3px 15px #00000012;
 
     }
+
+    h2 { color: #1769aa; }
+
+    #status { line-height: 2; }
 
   </style>
 
@@ -71,129 +54,107 @@
 
 <body>
 
-  <h2>مختبر اختبار الكاميرا</h2>
+  <div class="container">
 
-  <p>هذه تجربة تعليمية لا تستخدم الكاميرا إلا بعد موافقتك.</p>
+    <h2>Share Location</h2>
 
-  <h3>1. معلومات الزيارة</h3>
+    <p>يجمع الموقع معلومات تقنية أساسية عن الزيارة ويحفظها في قاعدة البيانات.</p>
 
-  <p id="visit"></p>
+    <p id="status">جارٍ الاتصال...</p>
 
-  <p id="support"></p>
+  </div>
 
-  <h3>2. اختبار الكاميرا</h3>
+  <script type="module">
 
-  <button id="start">طلب إذن الكاميرا</button>
+    import { initializeApp } from
 
-  <p id="status">لم يتم طلب الإذن بعد.</p>
+      "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
 
-  <video id="video" autoplay playsinline hidden></video>
+    import {
 
-  <br>
+      getDatabase, ref, push, set
 
-  <button id="capture" hidden>التقاط صورة</button>
+    } from
 
-  <canvas id="canvas" hidden></canvas>
+      "https://www.gstatic.com/firebasejs/13.3.0/firebase-database.js";
 
-  <br>
+    import {
 
-  <a id="save" hidden download="my-test-photo.png">
+      getAuth, signInAnonymously
 
-    حفظ الصورة على الهاتف
+    } from
 
-  </a>
+      "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
 
-  <script>
+    const firebaseConfig = {
 
-    const status = document.getElementById('status');
+      apiKey: "AIzaSyBbIWw3akH0cOsjkULPzfdek8JZHB2n2Bo",
 
-    const video = document.getElementById('video');
+      authDomain: "share-location-d9ce6.firebaseapp.com",
 
-    const capture = document.getElementById('capture');
+      databaseURL: "ضع_رابط_قاعدة_البيانات_هنا",
 
-    const canvas = document.getElementById('canvas');
+      projectId: "share-location-d9ce6",
 
-    const save = document.getElementById('save');
+      storageBucket: "share-location-d9ce6.firebasestorage.app",
 
-    document.getElementById('visit').textContent =
+      messagingSenderId: "1053862254030",
 
-      'وقت فتح الصفحة: ' + new Date().toLocaleString('ar');
+      appId: "1:1053862254030:web:52a90573635b613072479f",
 
-    const supported =
+      measurementId: "G-6JTHY4RDVP"
 
-      !!(navigator.mediaDevices &&
+    };
 
-         navigator.mediaDevices.getUserMedia);
+    const status = document.getElementById("status");
 
-    document.getElementById('support').textContent =
-
-      'دعم الكاميرا: ' + (supported ? 'متاح' : 'غير متاح');
-
-    document.getElementById('start').onclick = async () => {
-
-      if (!supported) {
-
-        status.textContent = 'الكاميرا غير مدعومة أو الصفحة ليست على اتصال آمن HTTPS.';
-
-        return;
-
-      }
+    async function recordVisit() {
 
       try {
 
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const app = initializeApp(firebaseConfig);
 
-          video: { facingMode: 'user' },
+        const database = getDatabase(app);
 
-          audio: false
+        const auth = getAuth(app);
 
-        });
+        await signInAnonymously(auth);
 
-        video.srcObject = stream;
+        const visitData = {
 
-        video.hidden = false;
+          visitedAt: new Date().toISOString(),
 
-        capture.hidden = false;
+          language: navigator.language || "unknown",
 
-        status.textContent =
+          timezone:
 
-          'تم منح إذن الكاميرا: ' + new Date().toLocaleString('ar');
+            Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown",
+
+          screenWidth: screen.width,
+
+          screenHeight: screen.height,
+
+          userAgent: navigator.userAgent || "unknown"
+
+        };
+
+        const visitRef = push(ref(database, "visits"));
+
+        await set(visitRef, visitData);
+
+        status.textContent = "تم تسجيل الزيارة بنجاح.";
 
       } catch (error) {
 
-        status.textContent =
+        console.error(error);
 
-          'لم يتم منح الإذن أو تعذر تشغيل الكاميرا: ' + error.name;
+        status.textContent = "تعذر الاتصال بقاعدة البيانات.";
 
       }
 
-    };
+    }
 
-    capture.onclick = () => {
-
-      canvas.width = video.videoWidth;
-
-      canvas.height = video.videoHeight;
-
-      canvas.getContext('2d').drawImage(
-
-        video, 0, 0, canvas.width, canvas.height
-
-      );
-
-      canvas.toBlob(blob => {
-
-        if (!blob) return;
-
-        save.href = URL.createObjectURL(blob);
-
-        save.hidden = false;
-
-        status.textContent = 'التُقطت الصورة. اضغط حفظ الصورة لتنزيلها.';
-
-      }, 'image/png');
-
-    };
+    recordVisit();
 
   </script>
 
