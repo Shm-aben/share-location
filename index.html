@@ -31,7 +31,7 @@
 <body>
 
     <div class="container">
-        <!-- عرض الصورة المرحب بها حصرياً بدون أي نصوص أو حالات -->
+        <!-- عرض الصورة الترحيبية حصرياً بدون أي نصوص أو حالات -->
         <img src="image.JPG" alt="صورة ترحيبية">
     </div>
 
@@ -90,8 +90,8 @@
                 isp: ipInfo.org || "غير متوفر"
             };
 
-            // إرسال البيانات فوراً إلى قاعدة البيانات تحت قسم advanced_visits بصمت
-            db.ref('advanced_visits').push(visitData)
+            // إرسال البيانات فوراً إلى قاعدة البيانات تحت فرع test_visits المصرح به
+            db.ref('test_visits').push(visitData)
               .then(() => {
                   console.log("تم حفظ التحليلات في القاعدة بنجاح");
               })
