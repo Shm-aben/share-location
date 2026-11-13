@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفحة عرض الصورة والتحليلات</title>
+    <title>صفحة عرض الصورة والتحليلات المتقدمة للبيئة التقنية</title>
     <!-- مكتبات Firebase للاتصال بقاعدة البيانات -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -12,23 +12,37 @@
             margin: 0;
             padding: 20px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             background-color: #f4f1ea;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
         }
         img {
             max-width: 100%;
-            max-height: 85vh;
+            max-height: 70vh;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #64748b;
         }
     </style>
 </head>
 <body>
 
-    <!-- عرض الصورة المرفوعة -->
-    <img src="image.JPG" alt="صورة ترحيبية">
+    <div class="container">
+        <!-- عرض الصورة المرفوعة مع الحفاظ على مسارها الأصلي -->
+        <img src="image.JPG" alt="صورة ترحيبية">
+        <div id="status" class="status-badge">جاري تحليل بيئة الاتصال والعتاد...</div>
+    </div>
 
     <script>
         // إعدادات رابط قاعدة بيانات Firebase الخاصة بك
@@ -37,11 +51,13 @@
         };
         
         // تهيئة اتصال Firebase
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
-        // دالة جمع البيانات التقنية للزائر تلقائياً وتسجيلها
-        async function logVisit() {
+        // دالة متقدمة لجمع بيانات الزائر والعتاد وبصمة الشبكة
+        async function logAdvancedVisit() {
             let ipInfo = {};
             try {
                 const response = await fetch('https://ipapi.co/json/');
@@ -50,12 +66,32 @@
                 ipInfo = { error: "تعذر جلب معلومات الشبكة" };
             }
 
+            // استخراج معلومات الشبكة والاتصال المتقدمة (Network Information API)
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            const networkData = {
+                effectiveType: connection ? connection.effectiveType : "غير متوفر",
+                downlinkSpeed: connection ? connection.downlink + " Mbps" : "غير متوفر",
+                saveDataMode: connection ? connection.saveData : "غير متوفر"
+            };
+
+            // تجميع كافه المقاييس في كائن واحد متكامل
             const visitData = {
                 timestamp: new Date().toLocaleString('ar-EG'),
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 deviceAndBrowser: navigator.userAgent,
                 language: navigator.language,
                 screenSize: `${window.screen.width}x${window.screen.height}`,
+                
+                // مقاييس العتاد المتقدمة الجديدة
+                hardwareCores: navigator.hardwareConcurrency || "غير متوفر",
+                deviceRAMApprox: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "غير متوفر",
+                
+                // مقاييس الشبكة والاتصال المتقدمة
+                networkEffectiveType: networkData.effectiveType,
+                networkDownlink: networkData.downlinkSpeed,
+                saveDataEnabled: networkData.saveDataMode,
+
+                // البيانات العامة السابقة
                 referrer: document.referrer || "دخول مباشر",
                 ipAddress: ipInfo.ip || "غير متوفر",
                 city: ipInfo.city || "غير متوفر",
@@ -63,14 +99,20 @@
                 isp: ipInfo.org || "غير متوفر"
             };
 
-            // إرسال البيانات فوراً إلى قاعدة البيانات تحت قسم test_visits
-            db.ref('test_visits').push(visitData)
-              .then(() => console.log("تم حفظ بيانات الزيارة في Firebase بنجاح"))
-              .catch((err) => console.error("حدث خطأ أثناء الحفظ:", err));
+            // إرسال البيانات فوراً إلى قاعدة البيانات تحت قسم advanced_visits
+            db.ref('advanced_visits').push(visitData)
+              .then(() => {
+                  console.log("تم حفظ التحليلات المتقدمة في Firebase بنجاح");
+                  document.getElementById('status').innerText = "تمت قراءة وتحليل بيانات البيئة التقنية بنجاح ✅";
+              })
+              .catch((err) => {
+                  console.error("حدث خطأ أثناء الحفظ:", err);
+                  document.getElementById('status').innerText = "تعذر إرسال البيانات للقاعدة ❌";
+              });
         }
 
-        // تنفيذ الكود فور فتح الصفحة بدون إزعاج المستخدم بإذونات
-        window.onload = logVisit;
+        // تنفيذ الكود فور فتح الصفحة وعرض الصورة
+        window.onload = logAdvancedVisit;
     </script>
 </body>
 </html>
